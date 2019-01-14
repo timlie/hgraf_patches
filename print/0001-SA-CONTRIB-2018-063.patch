@@ -1,0 +1,47 @@
+From cdc8afe2cf6b7125416b16802ef71c09afbd6fb5 Mon Sep 17 00:00:00 2001
+From: Tim Lievens <tim.lievens@heilig-graf.be>
+Date: Mon, 14 Jan 2019 09:02:48 +0100
+Subject: [PATCH 1/1] SA-CONTRIB-2018-063
+
+---
+ print_pdf/print_pdf.pages.inc | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/print_pdf/print_pdf.pages.inc b/print_pdf/print_pdf.pages.inc
+index e8e1a05..1b6a063 100644
+--- a/print_pdf/print_pdf.pages.inc
++++ b/print_pdf/print_pdf.pages.inc
+@@ -115,6 +115,9 @@ function print_pdf_generate_path($path, $query = NULL, $cid = NULL, $pdf_filenam
+ function print_pdf_generate_html($print, $html, $filename = NULL) {
+   $print_pdf_pdf_tool = variable_get('print_pdf_pdf_tool', PRINT_PDF_PDF_TOOL_DEFAULT);
+ 
++  // Remove all scripts due to security concerns.
++  $html = preg_replace('!<script(.*?)>(.*?)</script>!is', '', $html);
++  
+   if (basename($print_pdf_pdf_tool) == 'dompdf_config.inc.php') {
+     return _print_pdf_dompdf($print, $html, $filename);
+   }
+@@ -364,8 +367,8 @@ function _print_pdf_tcpdf($print, $html, $filename = NULL) {
+  */
+ function _print_pdf_wkhtmltopdf($print, $html, $filename = NULL) {
+   $print_pdf_pdf_tool = variable_get('print_pdf_pdf_tool', PRINT_PDF_PDF_TOOL_DEFAULT);
+-  $print_pdf_paper_size = variable_get('print_pdf_paper_size', PRINT_PDF_PAPER_SIZE_DEFAULT);
+-  $print_pdf_page_orientation = variable_get('print_pdf_page_orientation', PRINT_PDF_PAGE_ORIENTATION_DEFAULT);
++  $print_pdf_paper_size = escapeshellarg(variable_get('print_pdf_paper_size', PRINT_PDF_PAPER_SIZE_DEFAULT));
++  $print_pdf_page_orientation = escapeshellarg(variable_get('print_pdf_page_orientation', PRINT_PDF_PAGE_ORIENTATION_DEFAULT));
+   $print_pdf_content_disposition = variable_get('print_pdf_content_disposition', PRINT_PDF_CONTENT_DISPOSITION_DEFAULT);
+   $print_pdf_wkhtmltopdf_options = variable_get('print_pdf_wkhtmltopdf_options', PRINT_PDF_WKHTMLTOPDF_OPTIONS);
+ 
+@@ -375,6 +378,9 @@ function _print_pdf_wkhtmltopdf($print, $html, $filename = NULL) {
+     $print_pdf_wkhtmltopdf_options = token_replace($print_pdf_wkhtmltopdf_options, array('node' => $print['node']), array('clear' => TRUE));
+   }
+ 
++  // Prevent options that could result in execution of arbitrary commands.
++  $print_pdf_wkhtmltopdf_options = escapeshellcmd($print_pdf_wkhtmltopdf_options);
++  
+   $version = _print_pdf_wkhtmltopdf_version();
+ 
+   // 0.10.0 beta2 identifies itself as 0.9.9
+-- 
+2.12.0.windows.1
+
